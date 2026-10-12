@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Админ-панель — Школа Майртуп</title>
+  <style>
+    :root {
+      --primary: #2c52ba;
+      --accent: #fbbf24;
+      --dark: #1f2937;
+      --light: #f9fafb;
+      --text: #334155;
+      --border: #cbd5e1;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--light);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .login-container, .admin-container {
+      max-width: 600px;
+      width: 100%;
+      padding: 2rem;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h2 { color: var(--primary); margin-bottom: 1.5rem; text-align: center; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--dark); }
+    input[type="password"], input[type="text"], input[type="date"], textarea {
+      width: 100%; padding: 0.75rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 1rem; box-sizing: border-box; font-family: inherit;
+    }
+    button.cta {
+      width: 100%; padding: 0.85rem; background: var(--primary); color: white;
+      border: none; border-radius: 8px; font-weight: 500; cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.cta:hover { background: #1e3a8a; }
+
+    /* Админ-интерфейс */
+    .admin-interface { display: none; }
+    .posts-list { max-height: 400px; overflow-y: auto; border-top: 1px solid #e5e7eb; margin-top: 1.5rem; }
+    .post-item { padding: 1rem 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .post-meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.3rem; }
+    
+    .btn-small {
+      padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer;
+      font-size: 0.9rem; margin-right: 0.5rem;
+    }
+    .btn-delete { background: #fee2e2; color: #991b1b; }
+    .btn-edit { background: #fef3c7; color: #92400e; }
+    .btn-save { background: var(--primary); color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- Экран входа -->
+  <div class="login-container" id="loginScreen">
+    <h2>Вход в админку</h2>
+    <div class="form-group">
+      <label for="adminPass">Пароль</label>
+      <input type="password" id="adminPass" placeholder="Введите пароль" required>
+    </div>
+    <button class="cta" onclick="checkPassword()">Войти</button>
+    <p style="margin-top:1rem;font-size:0.85rem;color:#64748b;text-align:center;">
+      Пароль для теста: <b>school123</b>
+    </p>
+  </div>
+
+  <!-- Админ-панель (скрыта по умолчанию) -->
+  <div class="admin-container admin-interface" id="adminPanel">
+    <h2>Управление постами</h2>
+
+    <!-- Форма добавления поста -->
+    <div style="margin-bottom:2rem;">
+      <h3>Добавить новый пост</h3>
+      <div class="form-group">
+        <label>Заголовок</label>
+        <input type="text" id="newPostTitle" placeholder="Например: День знаний">
+      </div>
+      <div class="form-group">
+        <label>Дата</label>
+        <input type="date" id="newPostDate">
+      </div>
+      <div class="form-group">
+        <label>Текст поста</label>
+        <textarea id="newPostContent" rows="4" placeholder="Описание мероприятия..."></textarea>
+      </div>
+      <button class="btn-small btn-save" onclick="addPost()">Добавить пост</button>
+    </div>
+
+    <!-- Список постов -->
+    <div class="posts-list" id="postsList">
+      <!-- Посты будут здесь -->
+    </div>
+  </div>
+
+  <script>
+    // Имитация проверки пароля (НЕ БЕЗОПАСНО!)
+    function checkPassword() {
+      const pass = document.getElementById('adminPass').value;
+      if (pass === 'school123') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadPosts();
+      } else {
+        alert('Неверный пароль');
+      }
+    }
+
+    // Хранение постов в localStorage (браузерное хранилище)
+    function getPosts() {
+      return JSON.parse(localStorage.getItem('schoolPosts')) || [];
+    }
+
+    function savePosts(posts) {
+      localStorage.setItem('schoolPosts', JSON.stringify(posts));
+    }
+
+    function loadPosts() {
+      const posts = getPosts();
+      const list = document.getElementById('postsList');
+      list.innerHTML = '';
+      posts.forEach((post, index) => {
+        const item = document.createElement('div');
+        item.className = 'post-item';
+        item.innerHTML = `
+          <div>
+            <strong>${post.title}</strong><br>
+            <span class="post-meta">${post.date}</span><br>
+            <p style="margin:0.5rem 0;">${post.content}</p>
+          </div>
+          <div>
+            <button class="btn-small btn-edit" onclick="editPost(${index})">✏️</button>
+            <button class="btn-small btn-delete" onclick="deletePost(${index})">🗑️</button>
+          </div>`;
+        list.appendChild(item);
+      });
+    }
+
+    function addPost() {
+      const title = document.getElementById('newPostTitle').value.trim();
+      const date = document.getElementById('newPostDate').value;
+      const content = document.getElementById('newPostContent').value.trim();
+
+      if (!title || !date || !content) {
+        alert('Заполните все поля');
+        return;
+      }
+
+      const posts = getPosts();
+      posts.push({ title, date, content });
+      savePosts(posts);
+      loadPosts();
+      document.getElementById('newPostTitle').value = '';
+      document.getElementById('newPostDate').value = '';
+      document.getElementById('newPostContent').value = '';
+    }
+
+    function deletePost(index) {
+      if (!confirm('Удалить этот пост?')) return;
+      let posts = getPosts();
+      posts.splice(index, 1);
+      savePosts(posts);
+      loadPosts();
+    }
+
+    function editPost(index) {
+      const posts = getPosts();
+      const post = posts[index];
+      document.getElementById('newPostTitle').value = post.title;
+      document.getElementById('newPostDate').value = post.date;
+      document.getElementById('newPostContent').value = post.content;
+
+      // Временная замена кнопки «Добавить» на «Сохранить»
+      const addBtn = document.querySelector('#postsList ~ .btn-small.btn-save');
+      addBtn.innerText = 'Сохранить изменения';
+      addBtn.onclick = () => {
+        post.title = document.getElementById('newPostTitle').value;
+        post.date = document.getElementById('newPostDate').value;
+        post.content = document.getElementById('newPostContent').value;
+        savePosts(posts);
+        loadPosts();
+        addBtn.innerText = 'Добавить пост';
+        addBtn.onclick = addPost;
+        document.getElementById('newPostTitle').value = '';
+        document.getElementById('newPostDate').value = '';
+        document.getElementById('newPostContent').value = '';
+      };
+    }
+  </script>
+</body>
+</html>
